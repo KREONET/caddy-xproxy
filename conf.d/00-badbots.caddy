@@ -1,0 +1,38 @@
+# Blocks training-data crawlers and requests with no User-Agent. Usage: import badbots
+# 학습데이터 수집 크롤러와 UA 없는 요청 차단. 사용: import badbots
+# refer to docs/snippets.md
+(badbots) {
+	@badbots header_regexp User-Agent (?i)(meta-externalagent|Bytespider|Bytedance|Amazonbot|GPTBot|ClaudeBot|anthropic-ai|Claude-Web|CCBot|PerplexityBot|Applebot-Extended|Google-Extended|PetalBot|SemrushBot|AhrefsBot|MJ12bot|DotBot|DataForSeoBot|Diffbot|ImagesiftBot|Scrapy)
+	# UA 헤더가 "없는" 요청만 잡는다. 헤더는 보내면서 값이 빈 문자열이면 통과한다.
+	@noua not header User-Agent *
+	handle @badbots {
+		log_append block_reason "ai-training-crawler"
+		respond 403
+	}
+	handle @noua {
+		log_append block_reason "empty-user-agent"
+		respond 403
+	}
+}
+
+# Also blocks AI assistant fetches. Never on a site people read. Usage: import ai-assist-deny
+# 사용자 요청형 AI 조회까지 차단. 사람이 읽는 공개 사이트에는 쓰지 않는다. 사용: import ai-assist-deny
+# refer to docs/snippets.md
+(ai-assist-deny) {
+	@ai_assist header_regexp User-Agent (?i)(ChatGPT-User|OAI-SearchBot|Claude-User|Perplexity-User|Google-CloudVertexBot|DuckAssistBot)
+	handle @ai_assist {
+		log_append block_reason "ai-assistant-fetch"
+		respond 403
+	}
+}
+
+# badbots without the empty-UA rule, for machine-readable feeds. Usage: import badbots-ua-ok
+# 빈 UA 차단만 뺀 badbots. 기계가 읽는 공개 데이터용. 사용: import badbots-ua-ok
+# refer to docs/snippets.md
+(badbots-ua-ok) {
+	@badbots header_regexp User-Agent (?i)(meta-externalagent|Bytespider|Bytedance|Amazonbot|GPTBot|ClaudeBot|anthropic-ai|Claude-Web|CCBot|PerplexityBot|Applebot-Extended|Google-Extended|PetalBot|SemrushBot|AhrefsBot|MJ12bot|DotBot|DataForSeoBot|Diffbot|ImagesiftBot|Scrapy)
+	handle @badbots {
+		log_append block_reason "ai-training-crawler"
+		respond 403
+	}
+}
