@@ -1,0 +1,14 @@
+# Terminates clients that cannot finish the OIDC flow. Usage: import gate-stub <CIDR...>
+# OIDC 를 완주 못 하는 자동화 클라이언트를 게이트 앞에서 종결. 사용: import gate-stub <CIDR...>
+# refer to docs/oidc.md
+(gate-stub) {
+	@gate_stub remote_ip {args[:]}
+	handle @gate_stub {
+		log_append auth gate-stub
+		header Content-Type "text/html; charset=utf-8"
+		respond <<HTML
+			<!doctype html><meta charset="utf-8"><title>Login required</title>
+			<p>Login required. This link is protected and cannot be previewed.</p>
+			HTML 200
+	}
+}

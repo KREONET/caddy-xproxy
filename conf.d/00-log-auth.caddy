@@ -1,0 +1,15 @@
+# Record who in the access log. Usage: import log-oidc, inside route after forward_auth
+# 액세스로그에 '누가' 를 기록. 사용: route 안 forward_auth 다음 줄에 import log-oidc
+# refer to docs/snippets.md
+(log-oidc) {
+	log_append auth       oidc
+	log_append auth_sub   {http.request.header.X-Auth-Request-User}
+	log_append auth_email {http.request.header.X-Auth-Request-Email}
+}
+
+# States that having no identifier is correct here. Usage: import log-internal
+# 식별자가 없는 것이 정상임을 명시한다. 사용: import log-internal
+# refer to docs/snippets.md
+(log-internal) {
+	log_append auth internal-bypass
+}

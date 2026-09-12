@@ -1,0 +1,35 @@
+# Copy to oidc.cfg and fill in. Secrets go in .env, not here.
+# oidc.cfg 로 복사해서 채운다. 시크릿은 여기가 아니라 .env 에 넣는다.
+# refer to docs/oidc.md
+provider = "oidc"
+oidc_issuer_url = "https://idp.example.com/application/o/xproxy/"
+client_id = "xproxy"
+
+# One character of difference from the value registered at the IdP and login fails.
+# IdP 포털 등록값과 한 글자라도 다르면 로그인이 실패한다.
+# refer to docs/oidc.md
+redirect_url = "https://inside.example.com/oauth2/callback"
+
+# Needed when one instance protects several sites; unlisted hosts get downgraded to "/".
+# 한 인스턴스로 사이트를 여러 개 보호할 때 필요하다. 없는 호스트는 "/" 로 강등된다.
+# refer to docs/oidc.md
+whitelist_domains = [".example.com"]
+
+# Required for Caddy to use this through forward_auth.
+# Caddy 가 forward_auth 로 쓰려면 필요하다.
+# refer to docs/snippets.md
+http_address = "127.0.0.1:4180"
+reverse_proxy = true
+set_xauthrequest = true
+pass_access_token = false
+
+email_domains = ["*"]
+skip_provider_button = true
+
+# Uncomment to keep static assets from round-tripping to the IdP.
+# 정적 리소스를 매번 IdP 왕복시키지 않으려면 주석을 푼다.
+# refer to docs/oidc.md
+# skip_auth_routes = ["^/static/", "^/favicon.ico$"]
+
+cookie_secure = true
+cookie_expire = "168h"
