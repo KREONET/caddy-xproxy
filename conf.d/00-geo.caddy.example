@@ -1,0 +1,13 @@
+# Drops traffic from outside one country. Generate the real list with tools/geo-gen.sh, then drop .example
+# 특정 국가 밖에서 오는 접근 차단. tools/geo-gen.sh 로 목록을 생성한 뒤 .example 을 뗀다
+# refer to docs/snippets.md
+#   ./tools/geo-gen.sh kr 203.0.113.0/24 > conf.d/00-geo.caddy
+#
+# The ranges below are a placeholder. / 아래 대역은 자리를 보여주는 더미다.
+(geo-allow) {
+	@geo_deny not remote_ip 192.0.2.0/24 198.51.100.0/24
+	handle @geo_deny {
+		log_append block_reason "geo-denied"
+		respond 444
+	}
+}
