@@ -1,0 +1,55 @@
+# Example 2: internal only, behind an authentik OIDC gate, assuming Outline. Drop .example to enable.
+# 예제 ②: 내부 전용 + authentik OIDC 게이트 (Outline 가정). 쓰려면 .example 을 뗀다.
+# refer to docs/oidc.md
+
+inside.example.com {
+	tls internal
+
+	import logsite inside.example.com
+	import secure
+	import robots-deny
+	import badbots
+	import ai-assist-deny
+
+	import probe-secret
+	import probe-app /__none__
+
+	# Node backend executes nothing. / Node 백엔드라 실행 확장자가 없다.
+	import probe-ext /__none__
+
+	import acl-internal
+
+	# Per-site exceptions go here, not in the shared table. / 사이트별 예외는 공용 표가 아니라 여기.
+	# @healthcheck remote_ip 198.51.100.7/32
+
+	# Block this and login becomes impossible. / 여기가 막히면 로그인이 불가능해진다.
+	handle /oauth2/* {
+		reverse_proxy 127.0.0.1:4180
+	}
+
+	handle @internal {
+		import log-internal
+		reverse_proxy http://127.0.0.1:3000
+	}
+
+	handle {
+		route {
+			forward_auth 127.0.0.1:4180 {
+				uri /oauth2/auth
+				copy_headers X-Auth-Request-Email X-Auth-Request-User
+				@unauth status 401
+				handle_response @unauth {
+					redir * /oauth2/start?rd={http.request.uri}
+				}
+			}
+			import log-oidc
+
+			reverse_proxy http://127.0.0.1:3000
+		}
+	}
+
+	# For internal-only with no OIDC, keep just this. / OIDC 없이 내부 전용이면 이것만 남긴다.
+	#   handle {
+	#           abort
+	#   }
+}

@@ -1,0 +1,23 @@
+# Example 1: a public site with scanner blocking, assuming MediaWiki. Drop .example to enable.
+# 예제 ①: 공개 사이트 + 스캐너 차단 (MediaWiki 가정). 쓰려면 .example 을 뗀다.
+# refer to docs/sites.md
+
+public.example.com {
+	# Delete this line once the host name is a real domain. / 실제 도메인이면 이 줄을 지운다.
+	tls internal
+
+	import logsite public.example.com
+	import secure
+	import robots-allow
+	import badbots
+
+	import probe-secret
+	import probe-app /__none__
+	# ⓐ what MediaWiki executes  ⓑ where uploads live / ⓐ 실행 확장자  ⓑ 업로드 경로
+	import probe-ext *.php *.php/* /images/*
+
+	# Replace this handle with your backend. / 이 handle 을 백엔드로 바꾼다.
+	handle {
+		respond "caddy-xproxy is running. Replace this handle block with your backend." 200
+	}
+}
