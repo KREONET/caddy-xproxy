@@ -1,0 +1,13 @@
+# DNS-01 issuance, for when port 80 is unreachable. Usage: import dns01
+# 80 포트가 공인망에서 도달 불가일 때의 DNS-01 발급. 사용: import dns01
+# refer to docs/tls.md
+(dns01) {
+	tls {
+		dns rfc2136 {
+			key_name {$DNS_TSIG_KEYNAME}
+			key_alg {$DNS_TSIG_ALG}
+			key {$DNS_TSIG_SECRET}
+			server {$DNS_TSIG_SERVER}
+		}
+	}
+}
