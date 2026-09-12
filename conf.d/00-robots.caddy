@@ -1,0 +1,22 @@
+# robots.txt answered by Caddy itself. Usage: import robots-allow | robots-deny
+# robots.txt 를 Caddy 가 직접 응답. 사용: import robots-allow | robots-deny
+# refer to docs/snippets.md
+(robots-allow) {
+	handle /robots.txt {
+		header Content-Type "text/plain; charset=utf-8"
+		respond <<ROBOTS
+			User-agent: *
+			Disallow:
+			ROBOTS 200
+	}
+}
+
+(robots-deny) {
+	handle /robots.txt {
+		header Content-Type "text/plain; charset=utf-8"
+		respond <<ROBOTS
+			User-agent: *
+			Disallow: /
+			ROBOTS 200
+	}
+}

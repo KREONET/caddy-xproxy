@@ -1,0 +1,25 @@
+# Security headers, and the Server header removed. Usage: import secure
+# 보안 헤더 부착, 서버 정보 노출 제거. 사용: import secure
+# refer to docs/snippets.md
+(secure) {
+	header {
+		Content-Security-Policy "object-src 'self'; frame-ancestors 'self';"
+		X-XSS-Protection "1; mode=block"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+}
+
+# Same, with iframe embedding allowed. Usage: import secure-embed https://embed.example.com
+# 같은 헤더 + 외부 iframe 임베드 허용. 사용: import secure-embed https://embed.example.com
+# refer to docs/snippets.md
+(secure-embed) {
+	header {
+		Content-Security-Policy "object-src 'self'; frame-ancestors 'self' {args[0]};"
+		X-XSS-Protection "1; mode=block"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+}
