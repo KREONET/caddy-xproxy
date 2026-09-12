@@ -1,0 +1,6 @@
+# Internal network ranges. This is the one file you edit for your environment.
+# 내부망 대역. 자기 환경에 맞게 이 파일만 고친다.
+# refer to docs/snippets.md
+(acl-internal) {
+	@internal remote_ip 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+}
