@@ -1,0 +1,15 @@
+.env
+.DS_Store
+
+# 액세스로그. 사이트별 디렉터리가 런타임에 만들어진다.
+/logs/*
+!/logs/.gitkeep
+
+# 실제 운영 설정. 예제(.example)만 추적하고 채워 넣은 것은 추적하지 않는다.
+/oauth2-proxy/*.cfg
+
+# 정적 페이지를 서빙할 때 쓰는 디렉터리. 내용은 각자의 것이다.
+/site/
+
+# tools/geo-gen.sh 가 생성하는 파일. 각자 환경의 스냅샷이다.
+/conf.d/00-geo.caddy
