@@ -1,0 +1,26 @@
+# Sites live in conf.d/*.caddy. An empty conf.d comes up silently doing nothing.
+# 사이트는 conf.d/*.caddy 로 분리한다. conf.d 가 비면 조용히 아무것도 안 하는 설정으로 뜬다.
+# refer to docs/caddy-gotchas.md
+{
+	admin localhost:2019
+	email {$ACME_EMAIL}
+}
+
+# The 00- prefix loads snippets before the sites that use them.
+# 00- 접두사가 스니펫을 사이트보다 먼저 로드시킨다.
+# refer to docs/snippets.md
+import conf.d/*.caddy
+
+# Anything matching no site is treated as a scan and logged to _catchall.
+# 어느 사이트에도 매칭되지 않은 접근은 스캔으로 간주하고 _catchall 에 기록한다.
+# refer to docs/logging.md
+http:// {
+	import logsite _catchall
+	redir https://{host}{uri} permanent
+}
+
+:443 {
+	tls internal
+	import logsite _catchall
+	abort
+}

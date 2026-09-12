@@ -1,0 +1,53 @@
+# Default: docker compose up -d   ·   With the gate: docker compose --profile oidc up -d
+# 기본: docker compose up -d   ·   OIDC 게이트까지: docker compose --profile oidc up -d
+# refer to docs/install.md
+
+services:
+  caddy:
+    # Swap image for build only when DNS-01 needs the rfc2136 plugin.
+    # DNS-01 이 필요할 때만 image 를 주석처리하고 build 를 켠다.
+    # refer to docs/tls.md
+    image: caddy:2
+    # build: ./caddy
+    container_name: xproxy-caddy
+    restart: unless-stopped
+
+    # Switching to bridge makes every remote_ip the Docker gateway, voiding all IP matchers.
+    # bridge 로 바꾸면 remote_ip 가 전부 도커 게이트웨이 IP 가 되어 IP 매처가 무력화된다.
+    # refer to docs/caddy-gotchas.md
+    network_mode: host
+
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./conf.d:/etc/caddy/conf.d:ro
+      - ./site:/srv:ro
+      - ./logs:/var/log/caddy
+      # Must stay a named volume: certificates and the ACME account key live here.
+      # named volume 이어야 한다. 인증서와 ACME 계정키가 여기 들어 있다.
+      # refer to docs/tls.md
+      - caddy_data:/data
+      - caddy_config:/config
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.8.1
+    container_name: xproxy-o2p
+    restart: unless-stopped
+    profiles: ["oidc"]
+    network_mode: host
+    command: ["--config=/etc/oauth2-proxy/oidc.cfg"]
+
+    # Secrets stay in .env so the cfg can be committed. Never use ${VAR:?} here —
+    # compose interpolates before filtering profiles, so it would block a plain up -d.
+    # 시크릿은 .env 에 둔다. ${VAR:?} 를 쓰면 프로필을 끈 기본 up -d 까지 막힌다.
+    # refer to docs/oidc.md
+    environment:
+      OAUTH2_PROXY_CLIENT_SECRET: ${O2P_CLIENT_SECRET:-}
+      OAUTH2_PROXY_COOKIE_SECRET: ${O2P_COOKIE_SECRET:-}
+    volumes:
+      - ./oauth2-proxy/oidc.cfg:/etc/oauth2-proxy/oidc.cfg:ro
+
+volumes:
+  caddy_data:
+  caddy_config:
