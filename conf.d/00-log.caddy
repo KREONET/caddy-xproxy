@@ -1,0 +1,13 @@
+# Per-site JSON access log with rolling. Usage: import logsite <hostname>
+# 사이트별 JSON 액세스로그, 자동 롤링. 사용: import logsite <hostname>
+# refer to docs/logging.md
+(logsite) {
+	log {
+		output file /var/log/caddy/{args[0]}/access.log {
+			roll_size 50MiB
+			roll_keep 14
+			roll_keep_for 90d
+		}
+		format json
+	}
+}
