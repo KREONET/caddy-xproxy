@@ -1,0 +1,60 @@
+# Scanner detection, layer 1: secret and credential files. No per-site exception. Usage: import probe-secret
+# 스캐너 탐지 1레이어: 비밀·크리덴셜 파일. 사이트별 예외 없음. 사용: import probe-secret
+# refer to docs/scanner-defense.md
+(probe-secret) {
+	@probe_secret path */.env* */.git* */.svn* */.hg* */.bzr* */.aws* */.ssh* */.netrc* */.npmrc* */.dockercfg* */.bash_history* */.bashrc* */rclone.conf* */.dev.vars* */.DS_Store
+	handle @probe_secret {
+		log_append block_reason "probe-secret"
+		respond 444
+	}
+}
+
+# Layer 2: fingerprints of apps that are not here. Usage: import probe-app <your real paths|/__none__>
+# 2레이어: 여기 없는 앱의 지문. 사용: import probe-app <내가 그 앱일 때의 정상경로|/__none__>
+# refer to docs/scanner-defense.md
+(probe-app) {
+	@probe_app {
+		path */wp-admin* */wp-login.php* */wp-content* */wp-includes* */wp-config* */wp-json* */wordpress* */xmlrpc.php* */phpmyadmin* */phpinfo.php */_phpinfo.php /@fs/*
+		not path {args[:]}
+	}
+	handle @probe_app {
+		log_append block_reason "probe-app"
+		respond 444
+	}
+}
+
+# Same, tagging only. Usage: import probe-app-observe <args>
+# 같은 것, 차단 없이 태그만. 사용: import probe-app-observe <인자>
+# refer to docs/scanner-defense.md
+(probe-app-observe) {
+	@probe_app_obs {
+		path */wp-admin* */wp-login.php* */wp-content* */wp-includes* */wp-config* */wp-json* */wordpress* */xmlrpc.php* */phpmyadmin* */phpinfo.php */_phpinfo.php /@fs/*
+		not path {args[:]}
+	}
+	log_append @probe_app_obs would_block "probe-app"
+}
+
+# Layer 3: extensions this backend cannot execute. Usage: import probe-ext <your extensions + upload paths|/__none__>
+# 3레이어: 백엔드가 실행 못 하는 확장자. 사용: import probe-ext <내 확장자 + 업로드경로|/__none__>
+# refer to docs/scanner-defense.md
+(probe-ext) {
+	@probe_ext {
+		path *.php *.php/* *.php.* *.phtml *.php3 *.php5 *.phps *.jsp *.jsp/* *.jspa *.jspx *.asp *.aspx *.ashx *.cfm *.cgi *.pl *.py *.rb *.do *.action
+		not path {args[:]}
+	}
+	handle @probe_ext {
+		log_append block_reason "probe-ext"
+		respond 444
+	}
+}
+
+# Same, tagging only. Start here, always. Usage: import probe-ext-observe <args>
+# 같은 것, 차단 없이 태그만. 도입은 반드시 여기부터. 사용: import probe-ext-observe <인자>
+# refer to docs/scanner-defense.md
+(probe-ext-observe) {
+	@probe_ext_obs {
+		path *.php *.php/* *.php.* *.phtml *.php3 *.php5 *.phps *.jsp *.jsp/* *.jspa *.jspx *.asp *.aspx *.ashx *.cfm *.cgi *.pl *.py *.rb *.do *.action
+		not path {args[:]}
+	}
+	log_append @probe_ext_obs would_block "probe-ext"
+}
