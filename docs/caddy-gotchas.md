@@ -79,6 +79,8 @@ docker compose up -d --force-recreate caddy
 
 Adding and editing sites all happens in `conf.d/`, so `reload` is enough day to day. The `Caddyfile` itself only changes for global options or the catch-all, and only then is a recreate needed.
 
+> ⚠ A directory mount follows changes **inside** it, not a replacement **of** it. Delete `conf.d/` and recreate it — which a deploy script doing `rm -rf conf.d && tar -x` does — and the directory's own inode changes, leaving the container on the old one. Measured: the container then sees an empty directory and `caddy validate` fails with `File to import not found: logsite`, while the running configuration keeps serving from memory, so nothing looks broken until the next restart. Replace the files inside the directory, or recreate the container.
+
 ## An empty conf.d comes up as an empty configuration, with no error
 
 ```sh

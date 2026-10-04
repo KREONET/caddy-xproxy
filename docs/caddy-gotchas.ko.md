@@ -79,6 +79,8 @@ docker compose up -d --force-recreate caddy
 
 사이트를 더하거나 고치는 일은 전부 `conf.d/` 에서 일어나므로 평소에는 `reload` 로 충분합니다. `Caddyfile` 자체를 건드리는 건 전역 옵션이나 catch-all 을 바꿀 때뿐이고, 그때만 재생성이 필요합니다.
 
+> ⚠ 디렉터리 마운트는 **안쪽** 변화를 따라오는 것이지 디렉터리 **자체**의 교체를 따라오지 않습니다. `conf.d/` 를 지웠다 다시 만들면 — 배포 스크립트가 `rm -rf conf.d && tar -x` 를 하면 그렇게 됩니다 — 디렉터리의 inode 가 바뀌어 컨테이너는 옛 inode 에 남습니다. 실측하면 컨테이너 쪽 `conf.d` 가 비어 보이고 `caddy validate` 가 `File to import not found: logsite` 로 실패하는데, 돌아가는 설정은 메모리에 있어서 서비스는 멀쩡해 보입니다. 다음 재시작 전까지 아무도 모릅니다. 디렉터리 안의 파일만 교체하거나, 컨테이너를 재생성하세요.
+
 ## conf.d 가 비면 에러 없이 빈 설정으로 뜬다
 
 ```sh
