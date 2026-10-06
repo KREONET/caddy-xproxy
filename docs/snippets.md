@@ -26,6 +26,10 @@ Attaches CSP, HSTS, `X-Content-Type-Options` and `X-XSS-Protection`, and removes
 
 > ⚠ With more than one origin, pass them **quoted as a single argument**. In the value position of a `header` directive `{args[:]}` is not substituted, which is why this uses `{args[0]}`.
 
+> ⚠ **Adding a directive to this CSP is a breaking change, not a hardening.** CSP restricts per directive: what no directive names is unrestricted. This policy sets `object-src` and `frame-ancestors` and nothing else, so scripts, styles, images and connections are currently unconstrained — and a site may well be relying on that without anyone having decided to allow it. Add `script-src` or `default-src` and every external resource that was loading by omission stops loading. One site in production loads a partner's SDK from another origin and would break exactly this way.
+>
+> The failure is quiet. Nothing in the proxy errors, nothing appears in the access log — the request never leaves the browser. The symptom is one widget missing from one page. Before adding a directive, open each site that imports `secure` and check what it actually pulls in.
+
 ## probe-secret · probe-app · probe-ext
 
 ```caddy
