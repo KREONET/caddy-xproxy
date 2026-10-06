@@ -81,6 +81,46 @@ docker compose up -d --force-recreate caddy
 
 > ⚠ 디렉터리 마운트는 **안쪽** 변화를 따라오는 것이지 디렉터리 **자체**의 교체를 따라오지 않습니다. `conf.d/` 를 지웠다 다시 만들면 — 배포 스크립트가 `rm -rf conf.d && tar -x` 를 하면 그렇게 됩니다 — 디렉터리의 inode 가 바뀌어 컨테이너는 옛 inode 에 남습니다. 실측하면 컨테이너 쪽 `conf.d` 가 비어 보이고 `caddy validate` 가 `File to import not found: logsite` 로 실패하는데, 돌아가는 설정은 메모리에 있어서 서비스는 멀쩡해 보입니다. 다음 재시작 전까지 아무도 모릅니다. 디렉터리 안의 파일만 교체하거나, 컨테이너를 재생성하세요.
 
+## 프록시 응답의 헤더를 고치려면 `>` 가 필요합니다
+
+`reverse_proxy` 에서 돌아온 응답에 find/replace `header` 를 걸면 `>` 로 지연시키지 않는 한 아무 일도 일어나지 않습니다. Caddy v2.11.4 에서 백엔드가 `Cache-Control: no-transform` 을 보내는 상태로 실측했습니다.
+
+| 지시어 | 결과 |
+|--|--|
+| `header Cache-Control "no-transform" "no-transform, no-store"` | `no-transform` — 안 바뀜 |
+| `header >Cache-Control "no-transform" "no-transform, no-store"` | `no-transform, no-store` |
+
+찾기 어려운 이유가 둘입니다. **`caddy adapt` 결과에는 어느 쪽이든 핸들러가 멀쩡히 들어 있습니다.** 설정만 보면 맞아 보입니다.
+
+```json
+{"handler":"headers","response":{"replace":{"Cache-Control":[{"search_regexp":"no-transform","replace":"no-transform, no-store"}]}}}
+```
+
+그리고 같은 블록 안의 `header { ... }` 설정형과 `header ?필드 값` 기본값형은 `>` 없이도 적용됩니다. 그것들은 되는데 replace 만 조용히 안 되니, 정규식이 틀렸나부터 의심하게 됩니다.
+
+`>` 가 없으면 핸들러에 도달한 시점에 실행되는데 그때는 백엔드 응답이 아직 없어서 replace 가 매칭할 대상이 없습니다. `>` 는 그 동작을 응답 헤더를 쓰는 시점으로 옮깁니다.
+
+## 지연된 `header` 두 줄은 역순으로 적용됩니다
+
+지연된 헤더 동작은 중첩 래퍼라, 응답을 쓸 때 안쪽부터 바깥으로 풀립니다. **나중에 쓴 줄이 먼저** 실행됩니다.
+
+그래서 "떼고 나서 붙이기" 를 두 줄로 쓰면 반대로 동작합니다.
+
+```caddy
+header >Set-Cookie "(?i)(;?\s*SameSite=[^;]+)?" ""     # 떼기
+header >Set-Cookie "$" "; SameSite=Lax"                # 붙이기
+```
+
+실측하면 붙이기가 먼저 돌고 떼기가 나중에 돌아서, 방금 붙인 것을 도로 지웁니다. 쿠키가 그대로 나갑니다.
+
+옛 값을 삼키면서 새 값을 쓰는 하나의 replace 로 합치세요.
+
+```caddy
+header >Set-Cookie "(?i)(;\s*SameSite=[^;]*)?$" "; SameSite=Lax"
+```
+
+> `reverse_proxy` 블록 안의 `header_down` 은 다른 메커니즘이라 작성 순서대로 적용됩니다. 거기서는 두 줄이 동작합니다. 떼기와 붙이기를 `header_down` 두 줄로 쓰면 붙인 값이 제대로 나오는 것을 실측으로 확인했습니다.
+
 ## conf.d 가 비면 에러 없이 빈 설정으로 뜬다
 
 ```sh

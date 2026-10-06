@@ -81,6 +81,46 @@ Adding and editing sites all happens in `conf.d/`, so `reload` is enough day to 
 
 > ⚠ A directory mount follows changes **inside** it, not a replacement **of** it. Delete `conf.d/` and recreate it — which a deploy script doing `rm -rf conf.d && tar -x` does — and the directory's own inode changes, leaving the container on the old one. Measured: the container then sees an empty directory and `caddy validate` fails with `File to import not found: logsite`, while the running configuration keeps serving from memory, so nothing looks broken until the next restart. Replace the files inside the directory, or recreate the container.
 
+## Rewriting a proxied response header needs `>`
+
+A find/replace `header` against a response that came back from `reverse_proxy` does nothing unless the directive is deferred with `>`. Measured on Caddy v2.11.4, upstream sending `Cache-Control: no-transform`:
+
+| directive | result |
+|--|--|
+| `header Cache-Control "no-transform" "no-transform, no-store"` | `no-transform` — unchanged |
+| `header >Cache-Control "no-transform" "no-transform, no-store"` | `no-transform, no-store` |
+
+Two things make this hard to find. **`caddy adapt` shows the handler either way**, fully formed, so the configuration looks correct:
+
+```json
+{"handler":"headers","response":{"replace":{"Cache-Control":[{"search_regexp":"no-transform","replace":"no-transform, no-store"}]}}}
+```
+
+And in the same block, plain `header { ... }` set and `header ?Field value` default forms do apply without `>`. Seeing those work while the replace silently does not, the natural suspicion is a bad regular expression.
+
+Without `>` the operation runs when the handler is reached, before the upstream response exists, so a replace has nothing to match. `>` moves it to the moment the response headers are written.
+
+## Two deferred `header` lines apply in reverse
+
+Deferred header operations are nested wrappers, unwrapped from the innermost outward when the response is written. The line written **last** runs **first**.
+
+Writing "strip, then append" as two lines therefore does the opposite:
+
+```caddy
+header >Set-Cookie "(?i)(;?\s*SameSite=[^;]+)?" ""     # strip
+header >Set-Cookie "$" "; SameSite=Lax"                # append
+```
+
+Measured: the append runs first, the strip runs second and removes what was just appended. The cookie comes out unchanged.
+
+Combine them into one replace that consumes the old value and writes the new one together:
+
+```caddy
+header >Set-Cookie "(?i)(;\s*SameSite=[^;]*)?$" "; SameSite=Lax"
+```
+
+> `header_down` inside a `reverse_proxy` block is a different mechanism and does apply in written order. Two lines work there. Measured: strip then append as two `header_down` lines produces the appended value correctly.
+
 ## An empty conf.d comes up as an empty configuration, with no error
 
 ```sh
