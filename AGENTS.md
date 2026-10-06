@@ -102,6 +102,7 @@ All of these came from measurement; the evidence is in [docs/caddy-gotchas.md](d
 - **Never use `${VAR:?}` in compose.** Compose interpolates the whole file before it filters profiles, so one `:?` in a disabled service blocks `docker compose up` entirely.
 - **Never add `ai-assist-deny` to a public site.** Handing a link to an AI tool for a summary then returns 403.
 - **Do not edit `00-*.caddy` directly.** Anyone cloning this repo hits a conflict on `git pull`. Tune through arguments where possible; when new behaviour is genuinely needed, add another snippet under a new name. Address-set files are the exception.
+- **The number is ownership, not priority.** `00-` is this repo's namespace; `01-` onward belongs to the deployment. A clone that needs its own snippet adds `conf.d/01-*.caddy` and leaves `00-` alone. This repo goes on shipping new snippets under `00-` — that is where they belong, and every existing one is already there. Measured: a new upstream `00-` file merges cleanly into a clone unless the clone happens to hold the exact same file name, and then the merge stops with an add/add conflict rather than breaking anything quietly. Pick a distinctive name and that is the whole defence.
 
 ## Address sets
 
