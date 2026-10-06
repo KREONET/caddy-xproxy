@@ -64,6 +64,7 @@ Four rules hold:
   [🇺🇸 English](X.md) · [🇰🇷 한국어](X.ko.md)
   ```
  Update both or neither. English is the entry point; Korean carries the same content, not a summary.
+- **`AGENTS.ko.md` is the one exception, and it is not a translation.** It holds the rules that only apply to writing Korean — register, the phrasings that keep creeping back, which terms stay untranslated. Everything general lives here and is not repeated there. Do not try to bring the two files into line; they are not meant to match.
 - **The README stays short.** Install, and the short version of each topic. Everything long lives in `docs/` and the README links to it.
 - **No hard wrapping.** Write each paragraph and list item as one long line and let the renderer wrap. Hard wraps make diffs useless — one added word reflows every following line.
 - **Do not copy into the docs what the config already says.** Backend addresses, ports, which site uses which gate: all of that is in `conf.d/`. Copy it into a document and only one copy gets fixed, and later you believe the wrong one. Documents carry what has nowhere to live in the config — design reasoning, measurements, migration state that spans files.
